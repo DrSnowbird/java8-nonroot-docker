@@ -1,11 +1,24 @@
-FROM openjdk:8
+ARG BASE_IMAGE=${BASE_IMAGE:-openjdk:8}
+FROM ${BASE_IMAGE}
 
 MAINTAINER DrSnowbird "DrSnowbird@openkbs.org"
+
+##################################
+#### ---- Tools: setup   ---- ####
+##################################
+ENV LANG C.UTF-8
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+       sudo bash curl wget unzip ca-certificates findutils coreutils gettext pwgen tini; \
+    apt-get autoremove; \
+    rm -rf /var/lib/apt/lists/* && \
+    echo "vm.max_map_count=262144" | tee -a /etc/sysctl.conf
 
 ###################################
 #### ---- Install Maven 3 ---- ####
 ###################################
-ENV MAVEN_VERSION=${MAVEN_VERSION:-3.8.3}
+ENV MAVEN_VERSION=${MAVEN_VERSION:-3.8.4}
 ENV MAVEN_HOME=/usr/apache-maven-${MAVEN_VERSION}
 ENV PATH=${PATH}:${MAVEN_HOME}/bin
 RUN curl -sL http://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
@@ -34,20 +47,6 @@ RUN mkdir -p ${GRADLE_INSTALL_BASE} && \
     ${GRADLE_HOME}/bin/gradle -v && \
     rm -f ${GRADLE_PACKAGE}
 
-#### ------------------------------------------------------------------------
-#### ---- User setup so we don't use root as user ----
-#### ------------------------------------------------------------------------
-ARG USER_ID=${USER_ID:-1000}
-ENV USER_ID=${USER_ID}
-
-ARG GROUP_ID=${GROUP_ID:-1000}
-ENV GROUP_ID=${GROUP_ID}
-    
-ARG USER=${USER:-developer}
-ENV USER=${USER}
-
-ENV WORKSPACE=${HOME}/workspace
-
 ###################################
 #### ---- user: developer ---- ####
 ###################################
@@ -72,6 +71,9 @@ RUN apt-get update && apt-get install -y sudo && \
 ##### ---- Docker Entrypoint : ---- #####
 #########################################
 COPY --chown=${USER}:${USER} docker-entrypoint.sh /
+COPY --chown=${USER}:${USER} scripts /scripts
+COPY --chown=${USER}:${USER} certificates /certificates
+RUN /scripts/setup_system_certificates.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 #####################################
