@@ -36,7 +36,6 @@ services:
       #- ./data:/home/developer/data
       #- ./workspace:/home/developer/workspace
       ## ==== App's additional mapping Volumes: ====
-      #- /tmp/.X11-unix:/tmp/.X11-unix
 
     ## -------------------------------
     ## -- Change to your specific port

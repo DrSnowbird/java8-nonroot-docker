@@ -55,6 +55,8 @@ RESTART_OPTION := always
 
 SHA := $(shell git describe --match=NeVeRmAtCh --always --abbrev=40 --dirty=*)
 
+TIME_START := $(shell date +%s)
+
 .PHONY: clean rmi build push pull up down run stop exec
 
 clean:
@@ -73,11 +75,13 @@ build-time:
 
 build-rm:
 	docker build --force-rm --no-cache \
-	-t $(DOCKER_IMAGE):$(VERSION) .
+		-t $(DOCKER_IMAGE):$(VERSION) .
 
 build:
 	docker build \
-	-t $(DOCKER_IMAGE):$(VERSION) .
+	    -t $(DOCKER_IMAGE):$(VERSION) .
+	docker images | grep $(DOCKER_IMAGE)
+	@echo ">>> Total Dockder images Build using time in seconds: $$(($$(date +%s)-$(TIME_START))) seconds"
 
 push:
 	docker commit -m "$comment" ${containerID} ${imageTag}:$(VERSION)
